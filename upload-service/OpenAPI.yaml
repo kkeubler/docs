@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: Upload Service API5
+  description: Upload Service API
+  version: 1.0.0
+  contact:
+    name: Upload Service Team
+
+servers:
+  - url: 'https://localhost:3000'
+    description: Development Server
+
+tags:
+  - name: Uploads
+    description: Endpunkte für Dateioperationen
+
+paths:
+  /api/v1/upload:
+    post:
+      tags:
+        - Uploads
+      summary: Upload einer Datei (vom Kurs-Service initiiert)
+      description: Nimmt eine Datei entgegen, speichert sie und gibt die
+        Upload-ID zurück.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        '201':
+          description: Datei erfolgreich hochgeladen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploadId:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Ungültige Anfrage oder fehlende Parameter
+        '500':
+          description: Interner Serverfehler beim Upload
+
+  /api/v1/files/{uploadId}:
+    get:
+      tags:
+        - Uploads
+      summary: Abrufen des Speicherpfads einer Datei
+      description: Gibt den Speicherort der Datei zurück.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+          description: Eindeutige Upload-ID der Datei
+      responses:
+        '200':
+          description: Pfad erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filePath:
+                    type: string
+                    example:
+                      minio://bucket/course123/file.pdf #$ref: '#/components/schemas/FileMetaData'  -> auf schemas verlinken?
+        '404':
+          description: Datei nicht gefunden
+        '500':
+          description: Interner Serverfehler beim Abrufen des Pfads
+    put:
+      tags:
+        - Uploads
+      summary: Ersetzen einer Datei
+      description: Ersetzt eine vorhandene Datei basierend auf der Upload-ID.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Eindeutige Upload-ID der Datei
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        '200':
+          description: Datei erfolgreich ersetzt #Evtl. neuer Pfad, falls sich dieser ändert
+        '404':
+          description: Datei nicht gefunden
+        '500':
+          description: Fehler beim Ersetzen der Datei
+    delete:
+      tags:
+        - Uploads
+      summary: Datei löschen
+      description: Löscht die angegebene Datei aus dem Speicher.
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Upload-ID der Datei
+      responses:
+        '204':
+          description: Datei erfolgreich gelöscht
+        '404':
+          description: Datei nicht gefunden
+        '500':
+          description: Serverfehler beim Löschen
+
+components:
+  schemas:
+    FileMetaData:
+      type: object
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        filePath:
+          type: string
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+        fileType:
+          type: string
+        uploadTimestamp:
+          type: string
+          format: date-time
+  
