@@ -1,0 +1,1 @@
+Here we define the Contracts / functionality that the Services we depend on need to provide

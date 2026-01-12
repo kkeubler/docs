@@ -1,0 +1,1 @@
+* ADR containing necessary files and data for dashboard and front end
